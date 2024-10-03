@@ -2,8 +2,9 @@ const router = require('express').Router();
 const user = require('../controller/userController');
 const restrict = require('../middleware/restrict');
 
-router.get('/', user.find);
-router.get('/:id', restrict, user.findOne);
-router.put('/:id', restrict, user.update);
+router.get('/', user.findUser);
+router.get('/:id', user.findUserById);
+router.put('/:id', restrict, user.updateUser);
+router.delete('/:id', restrict, user.deleteUser);
 
 module.exports = router;
