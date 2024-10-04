@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const event = require('../controller/eventController');
+const event = require('../controller/event_controller');
 const restrict = require('../middleware/restrict');
 
 router.get('/', event.findEvents);
