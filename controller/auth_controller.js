@@ -19,7 +19,8 @@ const format = (user, token) => {
 const generateToken = (user) => {
   const payload = {
     user: {
-      id: user._id, // Use _id from MongoDB
+      id: user._id,
+      is_admin: user.is_admin,
     },
   };
   return jwt.sign(payload, process.env.JWT_SECRET, {

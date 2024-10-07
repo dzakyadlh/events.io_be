@@ -7,14 +7,12 @@ exports.findEvents = async (req, res) => {
     const skip = (page - 1) * limit;
     const events = await EventModel.find().limit(limit).skip(skip).exec();
     const count = await EventModel.countDocuments();
-    res
-      .status(200)
-      .json({
-        message: 'Events data fetched successfully',
-        data: events,
-        totalPages: Math.ceil(count / limit),
-        currentPage: page,
-      });
+    res.status(200).json({
+      message: 'Events data fetched successfully',
+      data: events,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+    });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching events', error });
   }
@@ -43,22 +41,50 @@ exports.createEvent = async (req, res) => {
   try {
     const {
       title,
-      description,
       date,
       location,
       poster,
-      host_user_id,
-      category_id,
+      quota,
+      event_type,
+      price,
+      host,
+      category,
+      details,
     } = req.body;
+
+    // Validate required fields
+    if (
+      !title ||
+      !date ||
+      !location ||
+      !event_type ||
+      !host ||
+      !category ||
+      !details
+    ) {
+      return res
+        .status(400)
+        .json({ message: 'Some fields cannot be left empty' });
+    }
 
     const newEvent = new EventModel({
       title,
-      description,
       date,
       location,
       poster,
-      host_user_id,
-      category_id,
+      quota,
+      event_type,
+      price,
+      host,
+      category,
+      details: {
+        speakers: details.speakers,
+        description: details.description,
+        keypoints: details.keypoints,
+        requirements: details.requirements,
+        agenda: details.agenda,
+        faq: details.faq,
+      },
     });
 
     const savedEvent = await newEvent.save();
@@ -74,29 +100,54 @@ exports.updateEvent = async (req, res) => {
     const { id } = req.params;
     const {
       title,
-      description,
       date,
       location,
       poster,
-      host_user_id,
-      category_id,
+      quota,
+      event_type,
+      price,
+      host,
+      category,
+      speakers,
+      description,
+      keypoints,
+      requirements,
+      agenda,
+      faq,
     } = req.body;
 
-    const updatedEvent = await EventModel.updateOne(
-      { _id: id },
-      {
-        $set: {
-          title,
-          description,
-          date,
-          location,
-          poster,
-          host_user_id,
-          category_id,
-        },
-        $currentDate: { updatedDate: true },
-      }
-    );
+    // Prepare update object
+    const updateData = {
+      $set: {},
+      $currentDate: { updatedDate: true },
+    };
+
+    // Check each field and add to update object if provided
+    if (title !== undefined) updateData.$set.title = title;
+    if (date !== undefined) updateData.$set.date = date;
+    if (location !== undefined) updateData.$set.location = location;
+    if (poster !== undefined) updateData.$set.poster = poster;
+    if (quota !== undefined) updateData.$set.quota = quota;
+    if (event_type !== undefined) updateData.$set.event_type = event_type;
+    if (price !== undefined) updateData.$set.price = price;
+    if (host !== undefined) updateData.$set.host = host;
+    if (category !== undefined) updateData.$set.category = category;
+
+    // Update details only if any part is provided
+    if (speakers || description || keypoints || requirements || agenda || faq) {
+      updateData.$set.details = {};
+      if (speakers !== undefined) updateData.$set.details.speakers = speakers;
+      if (description !== undefined)
+        updateData.$set.details.description = description;
+      if (keypoints !== undefined)
+        updateData.$set.details.keypoints = keypoints;
+      if (requirements !== undefined)
+        updateData.$set.details.requirements = requirements;
+      if (agenda !== undefined) updateData.$set.details.agenda = agenda;
+      if (faq !== undefined) updateData.$set.details.faq = faq;
+    }
+
+    const updatedEvent = await EventModel.updateOne({ _id: id }, updateData);
 
     if (updatedEvent.nModified === 0) {
       return res

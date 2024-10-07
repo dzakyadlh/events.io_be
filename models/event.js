@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const EventDetailSchema = require('./event_detail');
 const Schema = mongoose.Schema;
 
 const EventSchema = new Schema({
@@ -47,8 +48,16 @@ const EventSchema = new Schema({
   event_type: {
     type: String,
   },
-  host_name: {
+  host: {
     type: String,
+    required: true,
+  },
+  category: {
+    type: String,
+    required: true,
+  },
+  details: {
+    type: EventDetailSchema,
     required: true,
   },
 });

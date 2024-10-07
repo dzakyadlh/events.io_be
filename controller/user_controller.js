@@ -2,7 +2,7 @@ const UserModel = require('../models/user');
 
 exports.findUser = async (req, res) => {
   try {
-    const { page = 1, limit = 20 } = req.query;
+    const { page = 1, limit = 10 } = req.query;
     const skip = (page - 1) * limit;
 
     await UserModel.find()
@@ -10,14 +10,12 @@ exports.findUser = async (req, res) => {
       .skip(skip)
       .exec()
       .then((data) => {
-        res
-          .status(200)
-          .json({
-            message: 'Users data fetched successfully',
-            data,
-            totalPages: Math.ceil(count / limit),
-            currentPage: page,
-          });
+        res.status(200).json({
+          message: 'Users data fetched successfully',
+          data,
+          totalPages: Math.ceil(count / limit),
+          currentPage: page,
+        });
       })
       .catch((err) => {
         res.status(400).json({ message: 'Failed to show users data', err });
