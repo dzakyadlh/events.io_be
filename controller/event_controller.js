@@ -1,17 +1,33 @@
+const mongoose = require('mongoose');
 const EventModel = require('../models/event');
 
 // Find all events
 exports.findEvents = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.params;
+    const { page = 1, limit = 10, category, title } = req.query;
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
     const skip = (page - 1) * limit;
-    const events = await EventModel.find().limit(limit).skip(skip).exec();
+
+    const query = {};
+    if (category) {
+      query.category = { $regex: new RegExp(`${category}`, 'i') };
+    }
+    if (title) {
+      query.title = { $regex: new RegExp(title, 'i') };
+    }
+
+    const events = await EventModel.find(query)
+      .sort({ startDate: -1 })
+      .limit(limitNumber)
+      .skip(skip)
+      .exec();
     const count = await EventModel.countDocuments();
     res.status(200).json({
       message: 'Events data fetched successfully',
       data: events,
-      totalPages: Math.ceil(count / limit),
-      currentPage: page,
+      totalPages: Math.ceil(count / limitNumber),
+      currentPage: pageNumber,
     });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching events', error });
@@ -41,7 +57,8 @@ exports.createEvent = async (req, res) => {
   try {
     const {
       title,
-      date,
+      start_time,
+      end_time,
       location,
       poster,
       quota,
@@ -55,7 +72,8 @@ exports.createEvent = async (req, res) => {
     // Validate required fields
     if (
       !title ||
-      !date ||
+      !start_time ||
+      !end_time ||
       !location ||
       !event_type ||
       !host ||
@@ -69,7 +87,8 @@ exports.createEvent = async (req, res) => {
 
     const newEvent = new EventModel({
       title,
-      date,
+      start_time,
+      end_time,
       location,
       poster,
       quota,
@@ -96,68 +115,33 @@ exports.createEvent = async (req, res) => {
 
 // Update an event
 exports.updateEvent = async (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: 'Invalid event ID' });
+  }
+
   try {
-    const { id } = req.params;
-    const {
-      title,
-      date,
-      location,
-      poster,
-      quota,
-      event_type,
-      price,
-      host,
-      category,
-      speakers,
-      description,
-      keypoints,
-      requirements,
-      agenda,
-      faq,
-    } = req.body;
+    // Fetch the current event
+    const currentEvent = await EventModel.findById(id);
 
-    // Prepare update object
-    const updateData = {
-      $set: {},
-      $currentDate: { updatedDate: true },
-    };
-
-    // Check each field and add to update object if provided
-    if (title !== undefined) updateData.$set.title = title;
-    if (date !== undefined) updateData.$set.date = date;
-    if (location !== undefined) updateData.$set.location = location;
-    if (poster !== undefined) updateData.$set.poster = poster;
-    if (quota !== undefined) updateData.$set.quota = quota;
-    if (event_type !== undefined) updateData.$set.event_type = event_type;
-    if (price !== undefined) updateData.$set.price = price;
-    if (host !== undefined) updateData.$set.host = host;
-    if (category !== undefined) updateData.$set.category = category;
-
-    // Update details only if any part is provided
-    if (speakers || description || keypoints || requirements || agenda || faq) {
-      updateData.$set.details = {};
-      if (speakers !== undefined) updateData.$set.details.speakers = speakers;
-      if (description !== undefined)
-        updateData.$set.details.description = description;
-      if (keypoints !== undefined)
-        updateData.$set.details.keypoints = keypoints;
-      if (requirements !== undefined)
-        updateData.$set.details.requirements = requirements;
-      if (agenda !== undefined) updateData.$set.details.agenda = agenda;
-      if (faq !== undefined) updateData.$set.details.faq = faq;
+    if (!currentEvent) {
+      return res.status(404).json({ message: 'Event not found' });
     }
 
-    const updatedEvent = await EventModel.updateOne({ _id: id }, updateData);
+    // Merge updates with current values
+    const updatedEvent = await EventModel.findByIdAndUpdate(
+      id,
+      { $set: { ...currentEvent.toObject(), ...updates } },
+      { new: true, runValidators: true }
+    );
 
-    if (updatedEvent.nModified === 0) {
-      return res
-        .status(404)
-        .json({ message: 'Event not found or no changes detected' });
-    }
-
-    res.status(200).json({ message: 'Event updated', data: updatedEvent });
+    res
+      .status(200)
+      .json({ message: 'Event updated successfully', data: updatedEvent });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating event', error });
+    res.status(400).json({ message: 'Invalid updates', error: error.message });
   }
 };
 

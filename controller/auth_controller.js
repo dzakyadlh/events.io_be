@@ -4,13 +4,14 @@ const jwt = require('jsonwebtoken');
 
 // Format user object for response
 const format = (user, token) => {
-  const { _id, first_name, last_name, email } = user;
+  const { _id, first_name, last_name, email, image } = user;
 
   return {
     id: _id, // Use _id from MongoDB
     first_name,
     last_name,
     email,
+    image,
     token,
   };
 };
@@ -18,10 +19,8 @@ const format = (user, token) => {
 // Generate JWT token
 const generateToken = (user) => {
   const payload = {
-    user: {
-      id: user._id,
-      is_admin: user.is_admin,
-    },
+    _id: user._id,
+    // is_admin: user.is_admin,
   };
   return jwt.sign(payload, process.env.JWT_SECRET, {
     // Use env variable for secret
@@ -76,11 +75,9 @@ exports.login = async (req, res) => {
     }
 
     // Compare provided password with stored hashed password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Incorrect password' });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(400).json({ message: 'Invalid email or password' });
     }
-
     // Generate token for the user
     const token = generateToken(user);
 

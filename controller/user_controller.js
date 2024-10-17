@@ -5,38 +5,32 @@ exports.findUser = async (req, res) => {
     const { page = 1, limit = 10 } = req.query;
     const skip = (page - 1) * limit;
 
-    await UserModel.find()
-      .limit(limit)
-      .skip(skip)
-      .exec()
-      .then((data) => {
-        res.status(200).json({
-          message: 'Users data fetched successfully',
-          data,
-          totalPages: Math.ceil(count / limit),
-          currentPage: page,
-        });
-      })
-      .catch((err) => {
-        res.status(400).json({ message: 'Failed to show users data', err });
-      });
+    const count = await UserModel.countDocuments();
+
+    const users = await UserModel.find()
+      .limit(Number(limit))
+      .skip(Number(skip));
+
+    res.status(200).json({
+      message: 'Users data fetched successfully',
+      data: users,
+      totalPages: Math.ceil(count / limit),
+      currentPage: Number(page),
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to show users data', error });
+    res.status(500).json({
+      message: 'Failed to show users data',
+      error: error.message || error,
+    });
   }
 };
 
 exports.findUserById = async (req, res) => {
   try {
     const { id } = req.params;
-    await UserModel.findById(id)
-      .then((data) => {
-        res
-          .status(200)
-          .json({ message: 'User data fetched successfully', data });
-      })
-      .catch((err) => {
-        res.status(400).json({ message: 'Failed to fetch user data', err });
-      });
+    await UserModel.findById(id).then((data) => {
+      res.status(200).json({ message: 'User data fetched successfully', data });
+    });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch user data', error });
   }
@@ -55,15 +49,9 @@ exports.updateUser = async (req, res) => {
         },
         $currentDate: { lastUpdated: true },
       }
-    )
-      .then((data) => {
-        res
-          .status(200)
-          .json({ message: 'User data updated successfully', data });
-      })
-      .catch((err) => {
-        res.status(400).json({ message: 'Failed to update user data', err });
-      });
+    ).then((data) => {
+      res.status(200).json({ message: 'User data updated successfully', data });
+    });
   } catch (error) {
     res.status(500).json({ message: 'Failed to update user data', error });
   }
@@ -72,13 +60,9 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
-    await UserModel.deleteOne({ _id: id })
-      .then((data) => {
-        res.status(200).json({ message: 'User deleted successfully', data });
-      })
-      .catch((err) => {
-        res.status(400).json({ message: 'Failed to delete user', err });
-      });
+    await UserModel.deleteOne({ _id: id }).then((data) => {
+      res.status(200).json({ message: 'User deleted successfully', data });
+    });
   } catch (error) {
     res.status(500).json({ message: 'Failed to delete data user', error });
   }

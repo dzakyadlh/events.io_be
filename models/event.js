@@ -7,14 +7,24 @@ const EventSchema = new Schema({
     type: String,
     required: true,
   },
-  date: {
+  start_time: {
     type: Date,
     required: true,
     validate: {
       validator: function (v) {
         return v >= new Date();
       },
-      message: (props) => `Event date ${props.value} cannot be in the past!`,
+      message: (props) => `Start time ${props.value} cannot be in the past!`,
+    },
+  },
+  end_time: {
+    type: Date,
+    required: true,
+    validate: {
+      validator: function (v) {
+        return v >= new Date();
+      },
+      message: (props) => `End time ${props.value} cannot be in the past!`,
     },
   },
   location: {
@@ -60,6 +70,27 @@ const EventSchema = new Schema({
     type: EventDetailSchema,
     required: true,
   },
+  slug: {
+    type: String,
+    unique: true,
+  },
+});
+
+function generateSlug(text) {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-');
+}
+
+EventSchema.pre('save', function (next) {
+  if (!this.slug) {
+    this.slug = generateSlug(this.title);
+  }
+  next();
 });
 
 const EventModel = mongoose.model('events', EventSchema);
