@@ -4,7 +4,11 @@ const restrict = require('../middleware/restrict');
 
 router.get('/', user.findUser);
 router.get('/:id', user.findUserById);
-router.put('/:id', restrict, user.updateUser);
+router.post('/:user_id/wishlist', restrict, user.addWishlist);
+router.post('/:user_id/register-event', restrict, user.registerEvent);
+router.patch('/:id', restrict, user.updateUser);
 router.delete('/:id', restrict, user.deleteUser);
+router.delete('/:user_id/wishlist', restrict, user.removeWishlist);
+router.delete('/:user_id/register-event', restrict, user.unregisterEvent);
 
 module.exports = router;

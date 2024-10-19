@@ -42,7 +42,7 @@ const EventSchema = new Schema({
       validator: function (v) {
         return v >= 0;
       },
-      message: (props) => `${props.value} is not a valid price!`,
+      message: (props) => `${props.value} is not a valid quota!`,
     },
   },
   price: {
@@ -58,10 +58,6 @@ const EventSchema = new Schema({
   event_type: {
     type: String,
   },
-  host: {
-    type: String,
-    required: true,
-  },
   category: {
     type: String,
     required: true,
@@ -74,6 +70,17 @@ const EventSchema = new Schema({
     type: String,
     unique: true,
   },
+  host: {
+    type: Schema.Types.ObjectId,
+    ref: 'users',
+    required: true,
+  },
+  registered_users: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'users',
+    },
+  ],
 });
 
 function generateSlug(text) {

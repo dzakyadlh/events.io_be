@@ -19,8 +19,10 @@ const format = (user, token) => {
 // Generate JWT token
 const generateToken = (user) => {
   const payload = {
-    _id: user._id,
-    // is_admin: user.is_admin,
+    user: {
+      _id: user._id,
+      is_admin: user.is_admin,
+    },
   };
   return jwt.sign(payload, process.env.JWT_SECRET, {
     // Use env variable for secret
@@ -31,7 +33,14 @@ const generateToken = (user) => {
 // Register a new user
 exports.register = async (req, res) => {
   try {
-    const { first_name, last_name, email, password } = req.body;
+    const {
+      first_name,
+      last_name,
+      email,
+      password,
+      is_host = false,
+      is_admin = false,
+    } = req.body;
 
     // Check if the user already exists
     let user = await UserModel.findOne({ email });
@@ -39,8 +48,17 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'User already registered' });
     }
 
+    const default_image = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/images/users/default.png?t=2024-10-04T16%3A11%3A44.895Z`;
     // Create new user instance
-    user = new UserModel({ first_name, last_name, email, password });
+    user = new UserModel({
+      first_name,
+      last_name,
+      email,
+      password,
+      image: default_image,
+      is_host,
+      is_admin,
+    });
 
     // Hash password before saving
     const salt = await bcrypt.genSalt(10);
@@ -70,9 +88,6 @@ exports.login = async (req, res) => {
 
     // Check if the user exists
     let user = await UserModel.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: 'Email has not been registered' });
-    }
 
     // Compare provided password with stored hashed password
     if (!user || !(await bcrypt.compare(password, user.password))) {

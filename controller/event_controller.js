@@ -38,7 +38,7 @@ exports.findEvents = async (req, res) => {
 exports.findEventById = async (req, res) => {
   try {
     const { id } = req.params;
-    const event = await EventModel.findById(id);
+    const event = await EventModel.findById(id).populate('host');
 
     if (!event) {
       return res.status(404).json({ message: 'Event not found' });
@@ -117,6 +117,7 @@ exports.createEvent = async (req, res) => {
 exports.updateEvent = async (req, res) => {
   const { id } = req.params;
   const updates = req.body;
+  const user_id = req.user._id;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(400).json({ message: 'Invalid event ID' });
@@ -124,16 +125,22 @@ exports.updateEvent = async (req, res) => {
 
   try {
     // Fetch the current event
-    const currentEvent = await EventModel.findById(id);
+    const event = await EventModel.findById(id);
 
-    if (!currentEvent) {
+    if (!event) {
       return res.status(404).json({ message: 'Event not found' });
+    }
+
+    if (event.host.toString() !== user_id.toString()) {
+      return res
+        .status(403)
+        .json({ message: 'You are not authorized to update this event' });
     }
 
     // Merge updates with current values
     const updatedEvent = await EventModel.findByIdAndUpdate(
       id,
-      { $set: { ...currentEvent.toObject(), ...updates } },
+      { $set: { ...event.toObject(), ...updates } },
       { new: true, runValidators: true }
     );
 
@@ -141,7 +148,7 @@ exports.updateEvent = async (req, res) => {
       .status(200)
       .json({ message: 'Event updated successfully', data: updatedEvent });
   } catch (error) {
-    res.status(400).json({ message: 'Invalid updates', error: error.message });
+    res.status(400).json({ message: 'Invalid updates', error });
   }
 };
 
@@ -149,13 +156,19 @@ exports.updateEvent = async (req, res) => {
 exports.deleteEvent = async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedEvent = await EventModel.deleteOne({ _id: id });
+    const user_id = req.user._id;
 
-    if (deletedEvent.deletedCount === 0) {
-      return res.status(404).json({ message: 'Event not found' });
+    const event = await EventModel.findById(id);
+
+    if (event.host.toString() !== user_id.toString()) {
+      return res
+        .status(403)
+        .json({ message: 'You are not authorized to delete this event' });
     }
 
-    res.status(200).json({ message: 'Event deleted', data: deletedEvent });
+    const deletedEvent = await EventModel.deleteOne({ _id: id });
+
+    res.status(200).json({ message: 'Event deleted', deletedEvent });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting event', error });
   }

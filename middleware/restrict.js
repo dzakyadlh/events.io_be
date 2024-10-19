@@ -1,3 +1,5 @@
 const passport = require('../lib/passport');
 
-module.exports = passport.authenticate('jwt', { session: false });
+const restrict = passport.authenticate('jwt', { session: false });
+
+module.exports = restrict;
