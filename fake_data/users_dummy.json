@@ -1,0 +1,44 @@
+[
+  {
+    "first_name": "Admin",
+    "last_name": "Super",
+    "email": "adminsuper@gmail.com",
+    "password": "adminsuper",
+    "is_admin": true
+  },
+  {
+    "first_name": "John",
+    "last_name": "Doe",
+    "email": "johndoe@gmail.com",
+    "password": "johndoe123",
+    "is_admin": false
+  },
+  {
+    "first_name": "Sarah",
+    "last_name": "Lee",
+    "email": "sarahlee@gmail.com",
+    "password": "sarahlee123",
+    "is_admin": false
+  },
+  {
+    "first_name": "Sophia",
+    "last_name": "Wilson",
+    "email": "sophiawilson@gmail.com",
+    "password": "sophiawilson123",
+    "is_admin": false
+  },
+  {
+    "first_name": "Rei",
+    "last_name": "Kazuki",
+    "email": "reikazuki@gmail.com",
+    "password": "reikazuki123",
+    "is_admin": false
+  },
+  {
+    "first_name": "Kamiya",
+    "last_name": "Sena",
+    "email": "kamiyasena@gmail.com",
+    "password": "kamiyasena123",
+    "is_admin": false
+  }
+]
